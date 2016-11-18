@@ -1,17 +1,21 @@
 #include <stdio.h>
 #include <iostream>
+#include <sstream>
 #include <assert.h>
+#include <fstream>
 // this header for SSE compiler
 #include <immintrin.h>
 // check thi apability of CPU
 #include "Cpuid.h"
 // SSE3 for Shuffle
 #include <tmmintrin.h>
+#include "Timer.h"
+#include "FrameTimer.h"
 
 extern "C" bool GetAVXSupportFlag();
 
 // loop for calculate vector
-void SumVectorSEE(int n, float alpha, float *X, float *Y) {
+void SumVectorSSE(int n, float alpha, float *X, float *Y) {
 	__m128 x_vec, y_vec,res_vec; /*Pointers to vector*/
 	int i;
 	const __m128 a_vec = _mm_set1_ps(alpha);
@@ -41,36 +45,30 @@ void SumVectorAVX(int n, float alpha, float *X, float *Y) {
 }
 int main() {
 
-	int *buffer;
-	int *buffer_maloc;
-	buffer_maloc = (int*)_mm_malloc (sizeof(int) * 1000, 16);
+	float alpha = 3;
+	const int n = 10000000;
+	float *a;
+	float *b;
+	a = (float*)_mm_malloc (sizeof(float) * n, 16);
 	// first buufer
-	buffer =       (int*) _mm_malloc(sizeof(int) * 1000, 16);
+	b = (float*) _mm_malloc(sizeof(float) * n, 16);
 
-	memset(buffer, 100, 1000);
-	__m128i zero = _mm_setzero_si128();
-	for (__m128i *i = reinterpret_cast<__m128i*>(buffer), *end = reinterpret_cast<__m128i*>(&buffer[1000]);i < end;i++) {
-		_mm_store_si128(i, zero);
-	}
-	// second buffer
-	const __m128i value_maloc = _mm_set1_epi32(10);
-	for (__m128i *i = reinterpret_cast<__m128i*>(buffer_maloc), *end = reinterpret_cast<__m128i*>(&buffer_maloc[1000]);i < end;i++) {
-		_mm_store_si128(i, value_maloc);
-	}
+	//memset(buffer, 100, 1000);
+	//__m128i zero = _mm_setzero_si128();
+	//for (__m128i *i = reinterpret_cast<__m128i*>(buffer), *end = reinterpret_cast<__m128i*>(&buffer[1000]);i < end;i++) {
+	//	_mm_store_si128(i, zero);
+	//}
+	//// second buffer
+	//const __m128i value_maloc = _mm_set1_epi32(10);
+	//for (__m128i *i = reinterpret_cast<__m128i*>(buffer_maloc), *end = reinterpret_cast<__m128i*>(&buffer_maloc[1000]);i < end;i++) {
+	//	_mm_store_si128(i, value_maloc);
+	//}
+	//for (unsigned int id = 0;id != 1000;id++) {
+	//	std::cout << " " << buffer_maloc[id] << std::endl;
+	//}
 
-	for (unsigned int id = 0;id != 1000;id++) {
-		std::cout << " " << buffer_maloc[id] << std::endl;
-	}
-
-	
-	/*delete buffer_maloc;*/
-	_mm_free(buffer);
-	_mm_free(buffer_maloc);
-
-	float constants[] = { 1,3,4,5,3,5 };
-	__m256 ymm0 = _mm256_broadcast_ss(constants);
-
-
+	std::wofstream logFile(L"logfile.txt");
+	FrameTimer ft;
 	while (1){
 
 		std::cout << "Hello world" << std::endl;
@@ -93,11 +91,19 @@ int main() {
 		}
 		break;
 	}
-	while (true)
+	int k = 0;
+	while (k!=100)
 	{
+
+		ft.StartFrame();
+		SumVectorAVX(n, alpha, a, b);
+		ft.StopFrame(logFile);
+		k++;
 		//std::cout << "Now I want to see the different things when i use Github.com" << std::endl;
 	}
 
-
+	/*delete buffer_maloc;*/
+	_mm_free(a);
+	_mm_free(b);
 	return 0;
 }
