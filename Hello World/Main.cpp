@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <iostream>
+#include <sstream>
 #include <assert.h>
 // this header for SSE compiler
 #include <immintrin.h>
@@ -7,6 +8,9 @@
 #include "Cpuid.h"
 // SSE3 for Shuffle
 #include <tmmintrin.h>
+#include "Timer.h"
+#include "FrameTimer.h"
+#include <fstream>
 
 extern "C" bool GetAVXSupportFlag();
 
@@ -29,38 +33,75 @@ void SumVector(int n, float alpha, float *X, float *Y) {
 	}
 }
 
+// adding function pointer
+void MyFuntion() {
+	std::cout << "The funtion was called!" << std::endl;
+
+}
+void FunctionCaller(void(*fn_ptr)()) {
+	fn_ptr();
+}
+// UNiON
+union MyUnion
+{
+	int x;
+	float y;
+	double z;
+	char k;
+};
+
+struct MyStruct
+{
+	int x;
+	float y;
+	double z;
+	char k;
+};
+
 int main() {
-
-	int *buffer;
-	int *buffer_maloc;
-	buffer_maloc = (int*)_mm_malloc (sizeof(int) * 1000, 16);
+	float alpha = 3;
+	int n = 10000000;
+	float *a;
+	float *b;
+	
+	a = (float*)_mm_malloc (sizeof(float) * n, 16);
 	// first buufer
-	buffer =       (int*) _mm_malloc(sizeof(int) * 1000, 16);
+	b = (float*)_mm_malloc(sizeof(float) * n, 16);
+	
 
-	memset(buffer, 100, 1000);
-	__m128i zero = _mm_setzero_si128();
-	for (__m128i *i = reinterpret_cast<__m128i*>(buffer), *end = reinterpret_cast<__m128i*>(&buffer[1000]);i < end;i++) {
-		_mm_store_si128(i, zero);
-	}
-	// second buffer
-	const __m128i value_maloc = _mm_set1_epi32(10);
-	for (__m128i *i = reinterpret_cast<__m128i*>(buffer_maloc), *end = reinterpret_cast<__m128i*>(&buffer_maloc[1000]);i < end;i++) {
-		_mm_store_si128(i, value_maloc);
-	}
+	memset(a, 10, n);
+	memset(b, 9, n);
 
-	for (unsigned int id = 0;id != 1000;id++) {
-		std::cout << " " << buffer_maloc[id] << std::endl;
-	}
+
+	FrameTimer ft;
+	std::wofstream logFile(L"logfile.txt");
 
 	
-	/*delete buffer_maloc;*/
-	_mm_free(buffer);
-	_mm_free(buffer_maloc);
+
+
+	//memset(buffer, 100, 1000);
+	//__m128i zero = _mm_setzero_si128();
+	//for (__m128i *i = reinterpret_cast<__m128i*>(buffer), *end = reinterpret_cast<__m128i*>(&buffer[1000]);i < end;i++) {
+	//	_mm_store_si128(i, zero);
+	//}
+	//// second buffer
+	//const __m128i value_maloc = _mm_set1_epi32(10);
+	//for (__m128i *i = reinterpret_cast<__m128i*>(buffer_maloc), *end = reinterpret_cast<__m128i*>(&buffer_maloc[1000]);i < end;i++) {
+	//	_mm_store_si128(i, value_maloc);
+	//}
+	//for (unsigned int id = 0;id != 1000;id++) {
+	//	std::cout << " " << buffer_maloc[id] << std::endl;
+	//}
+
+	
+	
 
 	float constants[] = { 1,3,4,5,3,5 };
 	__m256 ymm0 = _mm256_broadcast_ss(constants);
 
 
+	std::cout << "size of union: " << sizeof(MyUnion) << std::endl;
+	std::cout << "size of struct: " << sizeof(MyStruct) << std::endl;
 	while (1){
 
 		std::cout << "Hello world" << std::endl;
@@ -83,11 +124,23 @@ int main() {
 		}
 		break;
 	}
-	while (true)
+	//
+	//void SumVectorSEE(int n, float alpha, float *X, float *Y)
+	//void(*FuncPtr)(int, float, float*, float*);
+	//FuncPtr = SumVector;
+	FunctionCaller(MyFuntion);
+	int k = 0;
+	while (k!=100)
 	{
-		//std::cout << "Now I want to see the different things when i use Github.com" << std::endl;
+		ft.StartFrame();
+		SumVector(n, alpha, a, b);
+		ft.StopFrame(logFile);
+		k++;
 	}
 
 
+	/*delete buffer_maloc;*/
+	_mm_free(a);
+	_mm_free(b);
 	return 0;
 }
