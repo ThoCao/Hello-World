@@ -51,5 +51,8 @@
     <Text Include="logfile.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="TextFile.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>
